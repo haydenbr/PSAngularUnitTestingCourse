@@ -1,4 +1,4 @@
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, Directive, Input, HostListener } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
@@ -9,6 +9,17 @@ import { HeroComponent } from '../hero/hero.component';
 import { HeroesComponent } from './heroes.component';
 import { By } from '@angular/platform-browser';
 
+@Directive({
+  selector: '[routerLink]'
+})
+class MockRouterLinkDirective {
+  @Input('routerLink') routerLink: any;
+  navigatedTo: any;
+
+  @HostListener('click') onClick() {
+    this.navigatedTo = this.routerLink;
+  }
+}
 
 describe('HeroesComponent', () => {
   let heroes: Hero[] = [
@@ -50,9 +61,8 @@ describe('HeroesComponent', () => {
 
     beforeEach(() => {
       TestBed.configureTestingModule({
-        declarations: [HeroesComponent],
+        declarations: [HeroesComponent, HeroComponent, MockRouterLinkDirective],
         providers: [{ provide: HeroService, useValue: mockHeroService }],
-        schemas: [NO_ERRORS_SCHEMA]
       });
 
       fixture = TestBed.createComponent(HeroesComponent);
@@ -66,22 +76,6 @@ describe('HeroesComponent', () => {
 
     it('should render a list of heroes', () => {
       expect(fixture.nativeElement.querySelectorAll('li').length).toBe(heroes.length);
-    });
-  });
-
-  describe('with child components', () => {
-    let fixture: ComponentFixture<HeroesComponent>;
-
-    beforeEach(() => {
-      TestBed.configureTestingModule({
-        declarations: [HeroesComponent, HeroComponent],
-        providers: [{ provide: HeroService, useValue: mockHeroService }],
-        schemas: [NO_ERRORS_SCHEMA]
-      });
-
-      fixture = TestBed.createComponent(HeroesComponent);
-      mockHeroService.getHeroes.and.returnValue(of(heroes));
-      fixture.detectChanges();
     });
 
     it('should render each hero as a hero component', () => {
@@ -112,6 +106,15 @@ describe('HeroesComponent', () => {
 
       let listContent = fixture.nativeElement.querySelector('ul').textContent;
       expect(listContent).toContain(newHero.name);
+    });
+
+    it('should have the correct route for the first hero', () => {
+      let heroComponents = fixture.debugElement.queryAll(By.directive(HeroComponent));
+      let routerLink = heroComponents[0].query(By.directive(MockRouterLinkDirective)).injector.get(MockRouterLinkDirective);
+
+      routerLink.onClick();
+
+      expect(routerLink.navigatedTo).toEqual(`/detail/${heroes[0].id}`);
     });
   });
 });

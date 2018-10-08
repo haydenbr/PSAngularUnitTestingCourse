@@ -1,9 +1,9 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 
-import { Hero }         from '../hero';
-import { HeroService }  from '../hero.service';
+import { Hero } from '../hero';
+import { HeroService } from '../hero.service';
 
 @Component({
   selector: 'app-hero-detail',
@@ -12,6 +12,11 @@ import { HeroService }  from '../hero.service';
 })
 export class HeroDetailComponent implements OnInit {
   @Input() hero: Hero;
+  @ViewChild('saveButton') saveButton: ElementRef;
+
+  get saveButtonElement() {
+    return this.saveButton.nativeElement;
+  }
 
   constructor(
     private route: ActivatedRoute,
@@ -33,8 +38,10 @@ export class HeroDetailComponent implements OnInit {
     this.location.back();
   }
 
- save(): void {
-    this.heroService.updateHero(this.hero)
-      .subscribe(() => this.goBack());
+  save() {
+    return new Promise((resolve) => this.heroService.updateHero(this.hero).subscribe(() => {
+      this.goBack();
+      setTimeout(() => resolve(), 3000);
+    }));
   }
 }
